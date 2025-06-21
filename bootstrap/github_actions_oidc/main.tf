@@ -61,43 +61,8 @@ resource "aws_iam_role" "github_actions_deployment_role" {
   })
 }
 
-# --- IMPORTANT ---
-# This is a sample policy. You MUST customize the permissions below
-# to match the exact requirements of your deployment script.
-# Follow the principle of least privilege.
-resource "aws_iam_policy" "deployment_policy" {
-  name        = "${var.deployment_role_name}-Policy"
-  description = "Permissions for the GitHub Actions deployment role."
-  tags        = var.tags
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "s3:ListBucket",
-          "s3:GetObject"
-        ],
-        Resource = [
-          "arn:aws:s3:::my-app-bucket",
-          "arn:aws:s3:::my-app-bucket/*"
-        ]
-      },
-      {
-        Effect = "Allow",
-        Action = [
-          "ec2:DescribeInstances",
-          "ec2:DescribeVpcs"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# Attach the permissions policy to the deployment role.
-resource "aws_iam_role_policy_attachment" "deployment_policy_attachment" {
+# Attach the AWS-managed AdministratorAccess policy to the deployment role.
+resource "aws_iam_role_policy_attachment" "admin_policy_attachment" {
   role       = aws_iam_role.github_actions_deployment_role.name
-  policy_arn = aws_iam_policy.deployment_policy.arn
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
