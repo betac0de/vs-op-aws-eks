@@ -27,6 +27,12 @@ on:
         default: 'false'
         type: string
 
+  # New: Schedule for automatic cleanup check
+  schedule:
+    # Runs every 15 minutes. You can adjust the cron expression as needed.
+    # Note: Scheduled workflows can be delayed by a few minutes.
+    - cron: '*/15 * * * *'
+
 # Permissions needed for OIDC authentication and posting PR comments
 permissions:
   contents: read
@@ -39,14 +45,11 @@ jobs:
     name: 'Terraform Plan'
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-
     defaults:
       run:
         shell: bash
-        working-directory: ./aws_eks # Set the working directory for all steps
-
+        working-directory: ./aws_eks
     steps:
-      # ... (plan steps remain the same) ...
       - name: Checkout
         uses: actions/checkout@v4
       - name: Configure AWS Credentials
@@ -92,14 +95,11 @@ jobs:
     name: 'Terraform Apply'
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
     defaults:
       run:
         shell: bash
-        working-directory: ./aws_eks # Set the working directory for all steps
-
+        working-directory: ./aws_eks
     steps:
-      # ... (apply steps remain the same) ...
       - name: Checkout
         uses: actions/checkout@v4
       - name: Configure AWS Credentials
@@ -114,18 +114,82 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
 
+  # New Job: Checks for inactivity and triggers destroy
+  cleanup_check:
+    name: 'Cleanup Check'
+    runs-on: ubuntu-latest
+    # This job only runs when triggered by the schedule
+    if: github.event_name == 'schedule'
+    permissions:
+      # Required to dispatch another workflow (terraform_destroy)
+      actions: write
+      # Required to read repository information (workflow runs)
+      contents: read
+
+    steps:
+      - name: Get last successful apply run and trigger destroy if inactive
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflowName = 'Terraform CI/CD for EKS';
+            const branch = 'main';
+            const event = 'push';
+            const status = 'success';
+            const inactivityThresholdMinutes = 15;
+            // IMPORTANT: This must match your actual workflow filename.
+            const workflowFileName = 'worflow.yml';
+
+            // Find the last successful 'apply' run
+            const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner,
+              repo,
+              workflow_id: workflowName,
+              branch,
+              event,
+              status,
+              per_page: 1
+            });
+
+            if (runs.workflow_runs.length === 0) {
+              console.log('No successful apply runs found on main branch. No destroy triggered.');
+              return;
+            }
+
+            const lastRunTime = new Date(runs.workflow_runs[0].updated_at);
+            const currentTime = new Date();
+            const diffMinutes = (currentTime - lastRunTime) / (1000 * 60);
+
+            console.log(`Last successful apply was ${diffMinutes.toFixed(2)} minutes ago.`);
+
+            if (diffMinutes >= inactivityThresholdMinutes) {
+              console.log(`Inactivity threshold of ${inactivityThresholdMinutes} minutes met. Triggering destroy.`);
+              // Trigger the destroy job by dispatching this same workflow
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: workflowFileName,
+                ref: branch,
+                inputs: {
+                  destroy: 'true'
+                }
+              });
+              console.log('Destroy workflow dispatched successfully.');
+            } else {
+              console.log('Environment is active. No destroy needed.');
+            }
+
   # This job runs ONLY when manually triggered with the correct input
   terraform_destroy:
     name: 'Terraform Destroy'
     runs-on: ubuntu-latest
     # This condition ensures the job only runs when manually dispatched with destroy=true
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true'
-
     defaults:
       run:
         shell: bash
-        working-directory: ./aws_eks # Set the working directory for all steps
-
+        working-directory: ./aws_eks
     steps:
       - name: Checkout
         uses: actions/checkout@v4
