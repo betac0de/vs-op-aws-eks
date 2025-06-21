@@ -1,0 +1,99 @@
+# .gitignore
+
+# ###########################
+# Terraform Core Files
+# ###########################
+
+# Ignore local state files and backups
+*.tfstate
+*.tfstate.backup
+
+# Ignore crash log files
+crash.log
+crash.*.log
+
+# Ignore the .terraform directory, which contains provider plugins and modules
+.terraform/
+
+# Ignore plan files. These are often binary and environment-specific.
+*.tfplan
+tfplan
+
+# Ignore override files, which are meant for local-only changes
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore sensitive variable files. Commit a .tfvars.example file instead.
+*.tfvars
+*.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# The .terraform.lock.hcl file locks provider versions. It is recommended
+# to COMMIT this file to your repository to ensure consistent runs for all
+# team members. Uncomment the line below only if your team has a policy
+# to ignore it.
+# .terraform.lock.hcl
+
+
+# ###########################
+# General Files & Logs
+# ###########################
+
+# Ignore all .txt files as requested
+*.txt
+
+# Ignore general log files
+*.log
+
+
+# ###########################
+# Build & Dependency Artifacts
+# ###########################
+# Proactively ignore common build output directories that might be used
+# for applications deployed to EKS.
+
+# Java (Maven / Gradle)
+target/
+build/
+out/
+
+# Node.js
+node_modules/
+dist/
+.npm/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+env/
+
+
+# ###########################
+# Local Environment Files
+# ###########################
+
+# Ignore local environment variable files. These often contain secrets.
+.env
+.env.*
+!.env.example
+
+
+# ###########################
+# IDE and OS Files
+# ###########################
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
