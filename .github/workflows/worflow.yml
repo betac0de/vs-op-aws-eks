@@ -76,12 +76,12 @@ jobs:
       - name: Terraform Init
         id: init
         # Use the terraform_executable path from the setup step
-        run: ${{ steps.setup_terraform.outputs.terraform_path }} init
+        run: terraform init
 
       - name: Terraform Plan
         id: plan
         # Use the terraform_executable path from the setup step
-        run: ${{ steps.setup_terraform.outputs.terraform_path }} plan -no-color -input=false -out=tfplan
+        run: terraform plan -no-color -input=false -out=tfplan
 
       # New Step: Generate Rover image from the plan file
       - name: Generate Rover Image
