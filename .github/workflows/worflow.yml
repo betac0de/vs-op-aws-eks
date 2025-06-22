@@ -83,14 +83,6 @@ jobs:
           rover -plan-path tfplan --output-format png --output-path plan.png
           echo "image_path=plan.png" >> $GITHUB_OUTPUT
 
-      # New Step: Upload the generated image to a hosting service (imgbb)
-      - name: Upload Rover Image
-        id: upload_image
-        uses: ivanklee/imgbb-action@v1.0.0
-        with:
-          path: ${{ steps.rover_image.outputs.image_path }}
-          apiKey: ${{ secrets.IMGBB_API_KEY }}
-
       - name: Create Plan Text Output
         id: plan-output
         run: |
