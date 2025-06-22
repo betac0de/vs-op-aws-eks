@@ -69,7 +69,8 @@ jobs:
         working-directory: ./artifacts
 
       - name: Verify Rover installation
-        run: rover --version
+        run: |
+          ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 --version
 
       - name: Terraform Init
         id: init
