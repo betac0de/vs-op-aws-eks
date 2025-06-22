@@ -59,6 +59,11 @@ jobs:
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+      - name: Install Rover
+        uses: apollographql/rover-actions/install-rover-cli@v1
+
+      - name: Verify Rover installation
+        run: rover --version
       - name: Terraform Init
         id: init
         run: terraform init
