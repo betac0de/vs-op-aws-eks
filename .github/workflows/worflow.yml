@@ -5,7 +5,7 @@ on:
   # Trigger on push to main (for apply)
   push:
     branches:
-      - develop
+      - main
     paths:
       - 'aws_eks/**'
       - '.github/workflows/**'
@@ -14,7 +14,7 @@ on:
   # Trigger on pull request to main (for plan)
   pull_request:
     branches:
-      - develop
+      - main
     paths:
       - 'aws_eks/**'
       - '.github/workflows/**'
