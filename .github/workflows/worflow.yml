@@ -74,40 +74,31 @@ jobs:
           ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 --version
 
       - name: Terraform Init
-        id: init
-        # Use the terraform_executable path from the setup step
         run: terraform init
 
       - name: Terraform Plan
-        id: plan
-        # Use the terraform_executable path from the setup step
         run: terraform plan -no-color -input=false -out=tfplan
 
       - name: Generate Rover HTML Report
-        id: rover_report
         run: |
           TERRAFORM_EXEC_PATH=$(which terraform)
           echo "Found Terraform executable at: $TERRAFORM_EXEC_PATH"
           ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 -planPath tfplan -standalone -tfPath "$TERRAFORM_EXEC_PATH"
 
-      # Upload the generated HTML file as a workflow artifact
       - name: Upload Rover Report as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rover-plan-report
-          # Rover creates a 'rover.html' file by default when using -standalone
-          path: ./aws_eks/rover.html
+          path: ./aws_eks/rover.zip
           retention-days: 7
 
       - name: Create Plan Text Output
-        id: plan-output
         run: |
           PLAN_CONTENT=$(terraform show -no-color tfplan)
           echo "plan_text<<EOF" >> $GITHUB_ENV
           echo "$PLAN_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # This script now links to the HTML artifact
       - name: Update PR with Plan and Interactive Report
         uses: actions/github-script@v7
         with:
@@ -117,7 +108,7 @@ jobs:
             const output = `#### Terraform Plan & Visualization 🖼️
             *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*
             
-            An interactive plan visualization has been generated. You can **[view the Rover HTML report here](${artifactUrl})** by clicking on the "rover-plan-report" artifact at the bottom of the workflow summary page.
+            An interactive plan visualization has been generated. You can **[view the Rover HTML report here](${artifactUrl})** by clicking on the "rover-plan-report" artifact at the bottom of the workflow summary page. (Note: you will need to download and unzip the 'rover.zip' file to view the report).
             
             <details><summary>Show Plan Text</summary>
             
@@ -131,4 +122,4 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: output
-            })
+            });
