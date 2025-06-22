@@ -9,6 +9,7 @@ on:
     paths:
       - 'aws_eks/**'
       - '.github/workflows/**'
+      - 'artifact/**'
 
   # Trigger on pull request to main (for plan)
   pull_request:
@@ -17,6 +18,7 @@ on:
     paths:
       - 'aws_eks/**'
       - '.github/workflows/**'
+      - 'artifact/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -61,14 +63,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Install Rover from tarball
         run: |
-          # Extract the tarball
-          tar -xzf rover_linux_amd64.tar.gz
-          # Make rover executable
-          chmod +x rover
-          # Move to a directory in PATH
-          sudo mv rover /usr/local/bin/
-          # Verify installation
+          tar -xzf artifact/rover_linux_amd64.tar.gz -C artifact
+          chmod +x artifact/rover
+          sudo mv artifact/rover /usr/local/bin/
           rover --version
+        working-directory: ./artifact
       - name: Install Rover
         run: |
           curl -sSL https://rover.apollo.dev/nix/latest | sh
