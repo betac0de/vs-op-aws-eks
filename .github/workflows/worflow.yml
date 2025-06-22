@@ -78,15 +78,20 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -no-color -input=false -out=tfplan
 
-      - name: Generate Rover Visualization
+      - name: Generate Rover Image
         run: |
-          # Generate the image using -genImage flag (creates rover.png)
+          # Get explicit Terraform path
+          TERRAFORM_EXEC_PATH=$(which terraform)
+          echo "Found Terraform executable at: $TERRAFORM_EXEC_PATH"
+
+          # Generate the image
           ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 \
             -planPath tfplan \
             -genImage \
+            -tfPath "$TERRAFORM_EXEC_PATH" \
             -workingDir ${GITHUB_WORKSPACE}/aws_eks
 
-          # Verify image was created
+          # Verify image creation
           ls -la rover.png
           echo "IMAGE_PATH=${GITHUB_WORKSPACE}/aws_eks/rover.png" >> $GITHUB_ENV
 
