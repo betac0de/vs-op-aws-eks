@@ -80,19 +80,21 @@ jobs:
         id: plan
         run: terraform plan -no-color -input=false -out=tfplan
 
+      # ... (previous steps are fine) ...
+
       # New Step: Generate Rover image from the plan file
       - name: Generate Rover Image
         id: rover_image
-        # CORRECTED COMMAND: Removed the "plan" subcommand
-        run: ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 --plan-path tfplan --output-format png --output-path plan.png
+        # CORRECTED COMMAND: Using the flags as defined in the tool's help output
+        run: ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 -planPath tfplan -genImage
 
-          # NEW STEP: Upload the generated image as a workflow artifact
+      # NEW STEP: Upload the generated image as a workflow artifact
       - name: Upload Rover Plan Image as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rover-plan-image
-          # The path must include the working directory where plan.png was created
-          path: ./aws_eks/plan.png
+          # Rover creates a 'rover.png' by default when using -genImage
+          path: ./aws_eks/rover.png
           retention-days: 7
 
       - name: Create Plan Text Output
@@ -103,7 +105,7 @@ jobs:
           echo "$PLAN_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # CORRECTED STEP: This script now posts a LINK to the artifact, not an embedded image
+      # This step correctly links to the artifact, no changes needed from last time
       - name: Update PR with Plan and Artifact Link
         uses: actions/github-script@v7
         with:
@@ -112,11 +114,11 @@ jobs:
             const artifactUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
             const output = `#### Terraform Plan & Visualization 🖼️
             *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*
-            
+
             The Rover visualization has been generated. You can **[view and download the plan image here](${artifactUrl})** by clicking on the "rover-plan-image" artifact at the bottom of the workflow summary page.
-            
+
             <details><summary>Show Plan Text</summary>
-            
+
             \`\`\`terraform
             ${{ env.plan_text }}
             \`\`\`
