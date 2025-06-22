@@ -61,7 +61,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Install Rover
         uses: apollographql/rover-actions/install-rover-cli@v1
-
       - name: Verify Rover installation
         run: rover --version
       - name: Terraform Init
