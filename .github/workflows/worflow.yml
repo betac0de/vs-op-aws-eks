@@ -60,33 +60,65 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
       - name: Install Rover
-        uses: apollographql/rover-actions/install-rover-cli@v1
+        run: |
+          curl -sSL https://rover.apollo.dev/nix/latest | sh
+          echo "$HOME/.rover/bin" >> $GITHUB_PATH
+        shell: bash
+
       - name: Verify Rover installation
         run: rover --version
+
       - name: Terraform Init
         id: init
         run: terraform init
+
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -input=false -out=tfplan
-      - name: Create Plan Output
+
+      # New Step: Generate Rover image from the plan file
+      - name: Generate Rover Image
+        id: rover_image
+        run: |
+          rover -plan-path tfplan --output-format png --output-path plan.png
+          echo "image_path=plan.png" >> $GITHUB_OUTPUT
+
+      # New Step: Upload the generated image to a hosting service (imgbb)
+      - name: Upload Rover Image
+        id: upload_image
+        uses: ivanklee/imgbb-action@v1.0.0
+        with:
+          path: ${{ steps.rover_image.outputs.image_path }}
+          apiKey: ${{ secrets.IMGBB_API_KEY }}
+
+      - name: Create Plan Text Output
         id: plan-output
         run: |
           PLAN_CONTENT=$(terraform show -no-color tfplan)
+          # This is a trick to make multiline strings available to other steps
           echo "plan_text<<EOF" >> $GITHUB_ENV
           echo "$PLAN_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-      - name: Update PR with Plan
+
+      # Modified Step: The script now includes the hosted image URL
+      - name: Update PR with Plan and Image
         uses: actions/github-script@v7
         with:
           script: |
-            const output = `#### Terraform Plan 📖
-            <details><summary>Show Plan</summary>
+            const output = `#### Terraform Plan & Visualization 🖼️
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*
+            
+            ![Terraform Plan](${{ steps.upload_image.outputs.url }})
+            
+            <br>
+            
+            <details><summary>Show Plan Text</summary>
+            
             \`\`\`terraform
             ${{ env.plan_text }}
             \`\`\`
             </details>
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            `;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
