@@ -59,13 +59,14 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
       - name: Setup Terraform
+        # ADD AN ID TO THIS STEP
+        id: setup_terraform
         uses: hashicorp/setup-terraform@v3
+
       - name: Install Rover from tarball
         run: |
           unzip rover_0.3.3_linux_amd64.zip
           chmod +x rover_v0.3.3
-          ./rover_v0.3.3 --version
-          pwd
         working-directory: ./artifacts
 
       - name: Verify Rover installation
@@ -74,21 +75,21 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init
+        # Use the terraform_executable path from the setup step
+        run: ${{ steps.setup_terraform.outputs.terraform_path }} init
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -input=false -out=tfplan
-
-      # ... (previous steps are fine) ...
+        # Use the terraform_executable path from the setup step
+        run: ${{ steps.setup_terraform.outputs.terraform_path }} plan -no-color -input=false -out=tfplan
 
       # New Step: Generate Rover image from the plan file
       - name: Generate Rover Image
         id: rover_image
-        # CORRECTED COMMAND: Using the flags as defined in the tool's help output
-        run: ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 -planPath tfplan -genImage
+        # CORRECTED COMMAND: Added the -tfPath flag to tell Rover where Terraform is
+        run: ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 -planPath tfplan -genImage -tfPath ${{ steps.setup_terraform.outputs.terraform_path }}
 
-      # NEW STEP: Upload the generated image as a workflow artifact
+      # The rest of your steps for uploading the artifact and commenting on the PR remain the same...
       - name: Upload Rover Plan Image as Artifact
         uses: actions/upload-artifact@v4
         with:
