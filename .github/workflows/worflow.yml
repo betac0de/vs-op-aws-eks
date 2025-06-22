@@ -62,7 +62,8 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Install Rover from tarball
         run: |
-          tar -xzf rover_linux_amd64.tar.gz
+          unzip rover_0.3.3_linux_amd64.zip
+          tar -xzf rover_0.3.3_linux_amd64.zip
           chmod +x rover
           sudo mv rover /usr/local/bin/
           rover --version
