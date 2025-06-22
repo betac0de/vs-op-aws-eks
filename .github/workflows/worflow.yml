@@ -65,6 +65,7 @@ jobs:
           unzip rover_0.3.3_linux_amd64.zip
           chmod +x rover_v0.3.3
           ./rover_v0.3.3 --version
+          pwd
         working-directory: ./artifacts
 
       - name: Verify Rover installation
