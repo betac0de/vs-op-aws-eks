@@ -86,19 +86,28 @@ jobs:
       # New Step: Generate Rover image from the plan file
       - name: Generate Rover Image
         id: rover_image
-        # CORRECTED STEP: Find terraform path manually and pass it to rover
         run: |
-          TERRAFORM_EXEC_PATH=$(which terraform)
-          echo "Found Terraform executable at: $TERRAFORM_EXEC_PATH"
-          ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 -planPath tfplan -genImage -tfPath "$TERRAFORM_EXEC_PATH"
+          # Find Terraform path explicitly
+          TERRAFORM_PATH=$(which terraform)
+          echo "Using Terraform at: $TERRAFORM_PATH"
+
+          # Generate the image with proper paths
+          ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 \
+            -planPath tfplan \
+            -genImage \
+            -tfPath "$TERRAFORM_PATH" \
+            -workingDir ${GITHUB_WORKSPACE}/aws_eks
+
+          # Verify image was created
+          ls -la rover.png
+          echo "ROVER_IMAGE_PATH=${GITHUB_WORKSPACE}/aws_eks/rover.png" >> $GITHUB_ENV
 
       # The rest of your steps for uploading the artifact and commenting on the PR remain the same...
       - name: Upload Rover Plan Image as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: rover-plan-image
-          # Rover creates a 'rover.png' by default when using -genImage
-          path: ./aws_eks/rover.png
+          path: ${{ env.ROVER_IMAGE_PATH }}
           retention-days: 7
 
       - name: Create Plan Text Output
