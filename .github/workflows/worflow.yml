@@ -79,9 +79,7 @@ jobs:
       # New Step: Generate Rover image from the plan file
       - name: Generate Rover Image
         id: rover_image
-        run: |
-          rover -plan-path tfplan --output-format png --output-path plan.png
-          echo "image_path=plan.png" >> $GITHUB_OUTPUT
+        run: rover plan -plan-path tfplan --output-format png --output-path plan.png
 
       - name: Create Plan Text Output
         id: plan-output
