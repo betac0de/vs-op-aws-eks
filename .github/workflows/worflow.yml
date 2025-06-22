@@ -62,11 +62,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
       - name: Install Rover from tarball
         run: |
-          tar -xzf artifact/rover_linux_amd64.tar.gz -C artifact
-          chmod +x artifact/rover
-          sudo mv artifact/rover /usr/local/bin/
+          tar -xzf artifacts/rover_linux_amd64.tar.gz -C artifact
+          chmod +x artifacts/rover
+          sudo mv artifacts/rover /usr/local/bin/
           rover --version
-        working-directory: ./artifact
+        working-directory: ./artifacts
       - name: Install Rover
         run: |
           curl -sSL https://rover.apollo.dev/nix/latest | sh
