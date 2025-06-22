@@ -52,18 +52,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Get runner architecture
-        run: |
-          echo "Runner architecture is: ${{ runner.arch }}"
-          # Maps to: x64, ARM64, etc. (GitHub's standardized values)
-          if [ "${{ runner.arch }}" == "X64" ]; then
-            echo "DOWNLOAD_ARCH=amd64" >> $GITHUB_ENV
-          elif [ "${{ runner.arch }}" == "ARM64" ]; then
-            echo "DOWNLOAD_ARCH=arm64" >> $GITHUB_ENV
-          else
-            echo "Unsupported architecture"
-            exit 1
-          fi
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -71,6 +59,16 @@ jobs:
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+      - name: Install Rover from tarball
+        run: |
+          # Extract the tarball
+          tar -xzf rover_linux_amd64.tar.gz
+          # Make rover executable
+          chmod +x rover
+          # Move to a directory in PATH
+          sudo mv rover /usr/local/bin/
+          # Verify installation
+          rover --version
       - name: Install Rover
         run: |
           curl -sSL https://rover.apollo.dev/nix/latest | sh
