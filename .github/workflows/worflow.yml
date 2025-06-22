@@ -63,7 +63,7 @@ jobs:
       - name: Install Rover from tarball
         run: |
           pwd
-          -ls la artifacts
+          -ls la
           tar -xzf artifacts/rover_linux_amd64.tar.gz -C artifact
           chmod +x artifacts/rover
           sudo mv artifacts/rover /usr/local/bin/
