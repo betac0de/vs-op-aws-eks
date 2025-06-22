@@ -83,31 +83,20 @@ jobs:
         # Use the terraform_executable path from the setup step
         run: terraform plan -no-color -input=false -out=tfplan
 
-      # New Step: Generate Rover image from the plan file
-      - name: Generate Rover Image
-        id: rover_image
+      - name: Generate Rover HTML Report
+        id: rover_report
         run: |
-          # Find Terraform path explicitly
-          TERRAFORM_PATH=$(which terraform)
-          echo "Using Terraform at: $TERRAFORM_PATH"
+          TERRAFORM_EXEC_PATH=$(which terraform)
+          echo "Found Terraform executable at: $TERRAFORM_EXEC_PATH"
+          ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 -planPath tfplan -standalone -tfPath "$TERRAFORM_EXEC_PATH"
 
-          # Generate the image with proper paths
-          ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 \
-            -planPath tfplan \
-            -genImage \
-            -tfPath "$TERRAFORM_PATH" \
-            -workingDir ${GITHUB_WORKSPACE}/aws_eks
-
-          # Verify image was created
-          ls -la rover.png
-          echo "ROVER_IMAGE_PATH=${GITHUB_WORKSPACE}/aws_eks/rover.png" >> $GITHUB_ENV
-
-      # The rest of your steps for uploading the artifact and commenting on the PR remain the same...
-      - name: Upload Rover Plan Image as Artifact
+      # Upload the generated HTML file as a workflow artifact
+      - name: Upload Rover Report as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rover-plan-image
-          path: ${{ env.ROVER_IMAGE_PATH }}
+          name: rover-plan-report
+          # Rover creates a 'rover.html' file by default when using -standalone
+          path: ./aws_eks/rover.html
           retention-days: 7
 
       - name: Create Plan Text Output
@@ -118,8 +107,8 @@ jobs:
           echo "$PLAN_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # This step correctly links to the artifact, no changes needed from last time
-      - name: Update PR with Plan and Artifact Link
+      # This script now links to the HTML artifact
+      - name: Update PR with Plan and Interactive Report
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -127,11 +116,11 @@ jobs:
             const artifactUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
             const output = `#### Terraform Plan & Visualization 🖼️
             *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*
-
-            The Rover visualization has been generated. You can **[view and download the plan image here](${artifactUrl})** by clicking on the "rover-plan-image" artifact at the bottom of the workflow summary page.
-
+            
+            An interactive plan visualization has been generated. You can **[view the Rover HTML report here](${artifactUrl})** by clicking on the "rover-plan-report" artifact at the bottom of the workflow summary page.
+            
             <details><summary>Show Plan Text</summary>
-
+            
             \`\`\`terraform
             ${{ env.plan_text }}
             \`\`\`
