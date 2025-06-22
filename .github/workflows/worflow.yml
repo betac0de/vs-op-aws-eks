@@ -70,6 +70,7 @@ jobs:
           sudo apt-get install -y graphviz imagemagick
           unzip ${GITHUB_WORKSPACE}/artifacts/rover_0.3.3_linux_amd64.zip -d ${GITHUB_WORKSPACE}/artifacts
           chmod +x ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3
+          ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 --version
 
       - name: Terraform Init
         run: terraform init
@@ -79,11 +80,15 @@ jobs:
 
       - name: Generate Rover Visualization
         run: |
+          # Generate the image using -genImage flag (creates rover.png)
           ${GITHUB_WORKSPACE}/artifacts/rover_v0.3.3 \
             -planPath tfplan \
-            -outputFormat png \
+            -genImage \
             -workingDir ${GITHUB_WORKSPACE}/aws_eks
-          echo "IMAGE_PATH=rover.png" >> $GITHUB_ENV
+
+          # Verify image was created
+          ls -la rover.png
+          echo "IMAGE_PATH=${GITHUB_WORKSPACE}/aws_eks/rover.png" >> $GITHUB_ENV
 
       - name: Upload Image to PR Comment
         uses: actions/github-script@v7
